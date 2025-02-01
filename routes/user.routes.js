@@ -1,11 +1,13 @@
 import { Router } from "express";
-
+import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
 
 
-router.post("/api");
+router.route("/resgister").post(
+    upload.single('image'),
+);
 
 
 
