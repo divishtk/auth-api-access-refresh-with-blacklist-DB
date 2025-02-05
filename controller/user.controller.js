@@ -55,10 +55,9 @@ const userResgisterController = async (req, resp, next) => {
 
     deleteFileIfExists(req.file?.path);
 
-   const message = `<p>Hey ${name}, Welcome! Please verify your email by clicking <a href="http://127.0.0.1:8080/mail-verification?id=${saveUserInMongo._id}">here</a>.</p>`;
+    const message = `<p>Hey ${name}, Welcome! Please verify your email by clicking<a href="http://127.0.0.1:8080/mail-verification?id=${saveUserInMongo._id}">here</a>.</p>`;
 
-   await sendEmails(email , "Mail Verification" , message)
-   
+    await sendEmails(email, "Mail Verification", message);
 
     return resp.status(400).json({
       data: createdUserCheck,
@@ -73,4 +72,45 @@ const userResgisterController = async (req, resp, next) => {
   }
 };
 
-export default userResgisterController;
+const mailVerificationController = async (req, resp, next) => {
+  try {
+    console.log(req.query.id);
+    if (req.query.id === undefined) {
+      return resp.render("404.view.ejs");
+    }
+
+    const userId = await User.findOne({
+      _id: req.query.id,
+    });
+
+    if (userId) {
+        if(userId.isVerified === 1){
+          return resp.render("mailVerification.view.ejs", {
+            message: "Your email already verified",
+          });
+        }
+      await User.findByIdAndUpdate(
+        {
+          _id: req.query.id,
+        },
+        {
+          $set: {
+            isVerified: 1,
+          },
+        }
+      );
+      return resp.render("mailVerification.view.ejs", {
+        message: "Mail Verified Successfully",
+      });
+    } else {
+      resp.render("404.view.ejs", {
+        message: "User not found!!",
+      });
+    }
+  } catch (error) {
+    console.log(error.message);
+    return resp.render("404.view.ejs");
+  }
+};
+
+export { userResgisterController, mailVerificationController };
