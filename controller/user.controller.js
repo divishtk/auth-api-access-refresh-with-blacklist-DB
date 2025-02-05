@@ -2,6 +2,9 @@ import { User } from "../models/user.models.js";
 import fs from "fs";
 import { validationResult } from "express-validator";
 import { sendEmails } from "../helpers/sendMails.helper.js";
+import randomstring from "randomstring";
+import { PasswordReset } from "../models/forgot-password.models.js";
+
 const deleteFileIfExists = (filePath) => {
   if (filePath) {
     try {
@@ -123,29 +126,77 @@ const sendEmailVerificationController = async (req, resp, next) => {
         errors: errors.array(),
       });
     }
-    
+
     const { email } = req.body;
 
     const emailData = await User.findOne({ email });
-    console.log(emailData)
-    if(!emailData) {
+    console.log(emailData);
+    if (!emailData) {
       return resp.status(400).json({
         success: false,
         message: "Email not exists!",
         errors: errors.array(),
       });
     }
-    if(emailData.isVerified == 1){
+    if (emailData.isVerified == 1) {
       return resp.status(400).json({
         success: false,
-        message: `Your email ${emailData.email} is already verified`
+        message: `Your email ${emailData.email} is already verified`,
       });
     }
     const message = `<p>Hey ${emailData.name}, Welcome! Please verify your email by clicking<a href="http://127.0.0.1:8080/mail-verification?id=${emailData._id}">here</a>.</p>`;
     await sendEmails(email, "Mail Verification", message);
     return resp.status(400).json({
       success: false,
-      message: `Verification link sent to your email`
+      message: `Verification link sent to your email`,
+    });
+  } catch (error) {
+    console.log(error.message);
+    return resp.render("404.view.ejs");
+  }
+};
+
+const forgetPasswordController = async (req, resp) => {
+  console.log("CALLED")
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return resp.status(400).json({
+        success: false,
+        message: "Error occured",
+        errors: errors.array(),
+      });
+    }
+    
+    const { email } = req.body;
+
+    const emailData = await User.findOne({ email });
+    console.log(emailData);
+    if (!emailData) {
+      return resp.status(400).json({
+        success: false,
+        message: "Email not exists!",
+        errors: errors.array(),
+      });
+    }
+
+    const dummyString = randomstring.generate();
+    const msg = `
+                <p>Hey ${emailData.name} Please click <a href = "http://127.0.0.1:8080/reset-password?${dummyString}"> here</a>
+                 here to reset your password</p>`;
+
+    await PasswordReset.deleteMany({user_id: emailData._id})
+    const passwordReset = await PasswordReset.create({
+      user_id: emailData._id,
+      token: dummyString,
+    });
+
+    await passwordReset.save();
+    await sendEmails(emailData.email, "Reset Passowrd", msg);
+
+    return resp.status(201).json({
+      success: true,
+      message: "Link for password reset sent!",
     });
   } catch (error) {
     console.log(error.message);
@@ -157,4 +208,5 @@ export {
   userResgisterController,
   mailVerificationController,
   sendEmailVerificationController,
+  forgetPasswordController,
 };

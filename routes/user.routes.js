@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
-import {sendEmailVerificationController, userResgisterController} from "../controller/user.controller.js";
-import {registerValidator, sendEmailApiVerifier} from "../helpers/validation.helper.js";
+import {forgetPasswordController, sendEmailVerificationController, userResgisterController} from "../controller/user.controller.js";
+import {emailCheckValidatorForPasswordReset, registerValidator, sendEmailApiVerifier} from "../helpers/validation.helper.js";
 
 
 const router = Router();
@@ -15,6 +15,7 @@ router.route("/register").post(
 );
 
 router.route("/send-email-verification").post(sendEmailApiVerifier, sendEmailVerificationController)
+router.route("/reset-password").post(emailCheckValidatorForPasswordReset, forgetPasswordController)
 
 
 

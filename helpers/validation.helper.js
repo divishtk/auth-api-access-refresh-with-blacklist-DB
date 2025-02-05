@@ -32,6 +32,10 @@ const sendEmailApiVerifier = [
         gmail_remove_dots: true
     }),
 ]
+const emailCheckValidatorForPasswordReset = [
+    check('email',"Please inculde valid email id").isEmail().normalizeEmail({
+        gmail_remove_dots: true
+    }),
+]
 
-
-export  {registerValidator,sendEmailApiVerifier}
+export  {registerValidator,sendEmailApiVerifier,emailCheckValidatorForPasswordReset}
