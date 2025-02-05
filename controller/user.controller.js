@@ -84,11 +84,11 @@ const mailVerificationController = async (req, resp, next) => {
     });
 
     if (userId) {
-        if(userId.isVerified === 1){
-          return resp.render("mailVerification.view.ejs", {
-            message: "Your email already verified",
-          });
-        }
+      if (userId.isVerified === 1) {
+        return resp.render("mailVerification.view.ejs", {
+          message: "Your email already verified",
+        });
+      }
       await User.findByIdAndUpdate(
         {
           _id: req.query.id,
@@ -113,4 +113,48 @@ const mailVerificationController = async (req, resp, next) => {
   }
 };
 
-export { userResgisterController, mailVerificationController };
+const sendEmailVerificationController = async (req, resp, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return resp.status(400).json({
+        success: false,
+        message: "Error occured",
+        errors: errors.array(),
+      });
+    }
+    
+    const { email } = req.body;
+
+    const emailData = await User.findOne({ email });
+    console.log(emailData)
+    if(!emailData) {
+      return resp.status(400).json({
+        success: false,
+        message: "Email not exists!",
+        errors: errors.array(),
+      });
+    }
+    if(emailData.isVerified == 1){
+      return resp.status(400).json({
+        success: false,
+        message: `Your email ${emailData.email} is already verified`
+      });
+    }
+    const message = `<p>Hey ${emailData.name}, Welcome! Please verify your email by clicking<a href="http://127.0.0.1:8080/mail-verification?id=${emailData._id}">here</a>.</p>`;
+    await sendEmails(email, "Mail Verification", message);
+    return resp.status(400).json({
+      success: false,
+      message: `Verification link sent to your email`
+    });
+  } catch (error) {
+    console.log(error.message);
+    return resp.render("404.view.ejs");
+  }
+};
+
+export {
+  userResgisterController,
+  mailVerificationController,
+  sendEmailVerificationController,
+};

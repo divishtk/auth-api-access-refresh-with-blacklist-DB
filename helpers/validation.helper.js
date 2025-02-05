@@ -27,4 +27,11 @@ const registerValidator = [
 
 ]
 
-export default registerValidator
+const sendEmailApiVerifier = [
+    check('email',"Please inculde valid email id").isEmail().normalizeEmail({
+        gmail_remove_dots: true
+    }),
+]
+
+
+export  {registerValidator,sendEmailApiVerifier}

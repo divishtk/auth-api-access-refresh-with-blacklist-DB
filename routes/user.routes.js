@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
-import {userResgisterController} from "../controller/user.controller.js";
-import registerValidator from "../helpers/validation.helper.js";
+import {sendEmailVerificationController, userResgisterController} from "../controller/user.controller.js";
+import {registerValidator, sendEmailApiVerifier} from "../helpers/validation.helper.js";
 
 
 const router = Router();
@@ -13,6 +13,8 @@ router.route("/register").post(
     registerValidator,
     userResgisterController
 );
+
+router.route("/send-email-verification").post(sendEmailApiVerifier, sendEmailVerificationController)
 
 
 
