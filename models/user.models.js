@@ -23,6 +23,9 @@ const UserSchema = new mongoose.Schema(
       type: Number,
       default: 0, // verified -1
     },
+    mobileNo: {
+        type: Number,
+      },
     pic: {
       type: String,
       required: true,

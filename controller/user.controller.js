@@ -1,6 +1,7 @@
 import { User } from "../models/user.models.js";
 import fs from "fs";
-
+import { validationResult } from "express-validator";
+import { sendEmails } from "../helpers/sendMails.helper.js";
 const deleteFileIfExists = (filePath) => {
   if (filePath) {
     try {
@@ -11,15 +12,22 @@ const deleteFileIfExists = (filePath) => {
   }
 };
 
-
 const userResgisterController = async (req, resp, next) => {
   try {
-    const { name, email, mobile, password } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return resp.status(400).json({
+        success: false,
+        message: "Error occured",
+        errors: errors.array(),
+      });
+    }
+    const { name, email, mobileNo, password } = req.body;
 
     const user = await User.findOne({ email });
 
     if (user) {
-        deleteFileIfExists(req.file?.path)
+      deleteFileIfExists(req.file?.path);
       return resp.status(400).json({
         success: false,
         message: "Account already exixts",
@@ -31,7 +39,7 @@ const userResgisterController = async (req, resp, next) => {
     const saveUserInMongo = await User.create({
       name,
       email,
-      mobile,
+      mobileNo,
       password,
       pic,
     });
@@ -45,7 +53,13 @@ const userResgisterController = async (req, resp, next) => {
       });
     }
 
-    deleteFileIfExists(req.file?.path)
+    deleteFileIfExists(req.file?.path);
+
+   const message = `<p>Hey ${name}, Welcome! Please verify your email by clicking <a href="http://127.0.0.1:8080/mail-verification?id=${saveUserInMongo._id}">here</a>.</p>`;
+
+   await sendEmails(email , "Mail Verification" , message)
+   
+
     return resp.status(400).json({
       data: createdUserCheck,
       success: true,
