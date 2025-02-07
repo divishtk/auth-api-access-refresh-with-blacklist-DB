@@ -4,6 +4,7 @@ import { validationResult } from "express-validator";
 import { sendEmails } from "../helpers/sendMails.helper.js";
 import randomstring from "randomstring";
 import { PasswordReset } from "../models/forgot-password.models.js";
+import { error } from "console";
 
 const deleteFileIfExists = (filePath) => {
   if (filePath) {
@@ -111,11 +112,10 @@ const mailVerificationController = async (req, resp, next) => {
       });
     }
   } catch (error) {
-    console.log(error.message);
     return resp.render("404.view.ejs");
   }
 };
-
+//api for email verfication in case of user delete the verify mail
 const sendEmailVerificationController = async (req, resp, next) => {
   try {
     const errors = validationResult(req);
@@ -157,7 +157,6 @@ const sendEmailVerificationController = async (req, resp, next) => {
 };
 
 const forgetPasswordController = async (req, resp) => {
-  console.log("CALLED")
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -167,7 +166,7 @@ const forgetPasswordController = async (req, resp) => {
         errors: errors.array(),
       });
     }
-    
+
     const { email } = req.body;
 
     const emailData = await User.findOne({ email });
@@ -182,10 +181,10 @@ const forgetPasswordController = async (req, resp) => {
 
     const dummyString = randomstring.generate();
     const msg = `
-                <p>Hey ${emailData.name} Please click <a href = "http://127.0.0.1:8080/reset-password?${dummyString}"> here</a>
+                <p>Hey ${emailData.name} Please click <a href = "http://127.0.0.1:8080/reset-password?token=${dummyString}">here</a>
                  here to reset your password</p>`;
 
-    await PasswordReset.deleteMany({user_id: emailData._id})
+    await PasswordReset.deleteMany({ user_id: emailData._id });
     const passwordReset = await PasswordReset.create({
       user_id: emailData._id,
       token: dummyString,
@@ -204,9 +203,79 @@ const forgetPasswordController = async (req, resp) => {
   }
 };
 
+const resetPasswordAuth = async (req, resp) => {
+  try {
+    console.log("called 1");
+
+    if (req.query.token === undefined) {
+      return resp.render("404.view.ejs");
+    }
+
+    const resetData = await PasswordReset.findOne({
+      token: req.query.token,
+    });
+
+    if (!resetData) {
+      return resp.render("404.view.ejs");
+    }
+    return resp.render("reset-password", {
+      resetData,
+    });
+  } catch (error) {}
+};
+
+const updatePasswordAuth = async (req, resp) => {
+  try {
+    const { user_id, password, confirm_password } = req.body;
+    console.log(password, user_id);
+    const resetData = await PasswordReset.findOne({ user_id });
+    console.log("called 2", resetData);
+    if (password != confirm_password) {
+      resp.render("reset-password", {
+        resetData,
+        error: "Confirm password not matched",
+      });
+    }
+
+    // await User.findByIdAndUpdate(
+    //   {
+    //     _id: user_id,
+    //   },
+    //   {
+    //     $set: {
+    //       password: confirm_password,
+    //     },
+    //   }
+    // );
+
+    const user = await User.findById({
+      _id : user_id
+    });
+
+    console.log('user',user)
+
+    user.password = confirm_password;
+    await user.save();
+
+    await PasswordReset.deleteMany({ user_id });
+    resp.redirect("/reset-success");
+  } catch (error) {
+    resp.render("404.view.ejs");
+  }
+};
+
+const resetSuccessController = async (req, resp) => {
+  try {
+    resp.render("reset-success");
+  } catch (error) {}
+};
+
 export {
   userResgisterController,
   mailVerificationController,
   sendEmailVerificationController,
   forgetPasswordController,
+  resetPasswordAuth,
+  updatePasswordAuth,
+  resetSuccessController,
 };

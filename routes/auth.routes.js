@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { mailVerificationController } from "../controller/user.controller.js";
+import { mailVerificationController, resetPasswordAuth, resetSuccessController, updatePasswordAuth } from "../controller/user.controller.js";
 
 
 const router = Router();
@@ -7,6 +7,11 @@ const router = Router();
 
 
 router.route("/mail-verification").get(mailVerificationController);
+router.route("/reset-password").get(resetPasswordAuth);
+router.route("/reset-your-password").post(updatePasswordAuth);
+router.route("/reset-success").get(resetSuccessController);
+
+
 
 
 
