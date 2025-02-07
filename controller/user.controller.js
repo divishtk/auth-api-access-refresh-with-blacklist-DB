@@ -227,9 +227,7 @@ const resetPasswordAuth = async (req, resp) => {
 const updatePasswordAuth = async (req, resp) => {
   try {
     const { user_id, password, confirm_password } = req.body;
-    console.log(password, user_id);
     const resetData = await PasswordReset.findOne({ user_id });
-    console.log("called 2", resetData);
     if (password != confirm_password) {
       resp.render("reset-password", {
         resetData,
@@ -249,10 +247,8 @@ const updatePasswordAuth = async (req, resp) => {
     // );
 
     const user = await User.findById({
-      _id : user_id
+      _id: user_id,
     });
-
-    console.log('user',user)
 
     user.password = confirm_password;
     await user.save();
@@ -270,6 +266,49 @@ const resetSuccessController = async (req, resp) => {
   } catch (error) {}
 };
 
+const loginController = async (req, resp) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return resp.status(400).json({
+        success: false,
+        message: "Error occured",
+        errors: errors.array(),
+      });
+    }
+
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return resp.status(400).json({
+        success: false,
+        message: "Account doesnot exists, please create account",
+      });
+    }
+
+    const checkPassword = await user.isMatchPassword(password);
+    if (!checkPassword) {
+      return resp.status(401).json({
+        success: false,
+        message: "Please provide the correct password",
+      });
+    }
+
+    return resp.status(201).json({
+      success: true,
+      data: user,
+      message: "Logged in",
+    });
+  } catch (error) {
+    console.log(error);
+    return resp.status(400).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
 export {
   userResgisterController,
   mailVerificationController,
@@ -278,4 +317,5 @@ export {
   resetPasswordAuth,
   updatePasswordAuth,
   resetSuccessController,
+  loginController,
 };

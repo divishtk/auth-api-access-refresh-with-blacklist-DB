@@ -38,4 +38,12 @@ const emailCheckValidatorForPasswordReset = [
     }),
 ]
 
-export  {registerValidator,sendEmailApiVerifier,emailCheckValidatorForPasswordReset}
+const loginValidatior = [
+    check('email',"Please inculde valid email id").isEmail().normalizeEmail({
+        gmail_remove_dots: true
+    }),
+    check('password',"Please inculde password").not().isEmpty()
+]
+
+
+export  {registerValidator,sendEmailApiVerifier,emailCheckValidatorForPasswordReset,loginValidatior}

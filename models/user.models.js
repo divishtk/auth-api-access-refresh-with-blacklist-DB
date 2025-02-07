@@ -24,8 +24,8 @@ const UserSchema = new mongoose.Schema(
       default: 0, // verified -1
     },
     mobileNo: {
-        type: Number,
-      },
+      type: Number,
+    },
     pic: {
       type: String,
       required: true,
@@ -37,12 +37,15 @@ const UserSchema = new mongoose.Schema(
 );
 
 UserSchema.pre("save", async function (next) {
-  console.log("bcrypt called")
   if (!this.isModified("password")) {
     return next();
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
+
+UserSchema.methods.isMatchPassword = async function (currentPassword) {
+  return await bcrypt.compare(currentPassword, this.password);
+};
 
 export const User = mongoose.model("User", UserSchema);
