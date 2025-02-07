@@ -5,6 +5,7 @@ import { sendEmails } from "../helpers/sendMails.helper.js";
 import randomstring from "randomstring";
 import { PasswordReset } from "../models/forgot-password.models.js";
 import { error } from "console";
+import jwt from "jsonwebtoken";
 
 const deleteFileIfExists = (filePath) => {
   if (filePath) {
@@ -14,6 +15,12 @@ const deleteFileIfExists = (filePath) => {
       console.log("Error deleting file:", error.message);
     }
   }
+};
+
+const generateAccessToken = async (user) => {
+  return jwt.sign(user, process.env.JWT_TOKEN_SECRET, {
+    expiresIn: process.env.JWT_TOKEN_EXPIRY,
+  });
 };
 
 const userResgisterController = async (req, resp, next) => {
@@ -295,9 +302,20 @@ const loginController = async (req, resp) => {
       });
     }
 
+    if (user.isVerified === 0) {
+      return resp.status(401).json({
+        success: false,
+        message: "Please verify your account",
+      });
+    }
+
+   const accessToken =  await generateAccessToken({_id : user._id})
+
     return resp.status(201).json({
       success: true,
       data: user,
+      token : accessToken,
+      tokenType : 'Bearer',
       message: "Logged in",
     });
   } catch (error) {
