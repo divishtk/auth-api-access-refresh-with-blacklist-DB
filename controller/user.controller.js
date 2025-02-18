@@ -4,7 +4,6 @@ import { validationResult } from "express-validator";
 import { sendEmails } from "../helpers/sendMails.helper.js";
 import randomstring from "randomstring";
 import { PasswordReset } from "../models/forgot-password.models.js";
-import { error } from "console";
 import jwt from "jsonwebtoken";
 
 const deleteFileIfExists = (filePath) => {
@@ -18,13 +17,23 @@ const deleteFileIfExists = (filePath) => {
 };
 
 const generateAccessToken = async (user) => {
-  return jwt.sign(user, process.env.JWT_TOKEN_SECRET, {
+  const userPayload = {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+  };
+  return jwt.sign(userPayload, process.env.JWT_TOKEN_SECRET, {
     expiresIn: process.env.JWT_TOKEN_EXPIRY,
   });
 };
 
 const generateRefreshToken = async (user) => {
-  return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, {
+  const userPayload = {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+  };
+  return jwt.sign(userPayload, process.env.REFRESH_TOKEN_SECRET, {
     expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
   });
 };
@@ -313,8 +322,8 @@ const loginController = async (req, resp) => {
       });
     }
 
-    const accessToken = await generateAccessToken({ user });
-    const refreshToken = await generateRefreshToken({ user });
+    const accessToken = await generateAccessToken(user);
+    const refreshToken = await generateRefreshToken(user);
 
     return resp.status(201).json({
       success: true,
@@ -325,7 +334,6 @@ const loginController = async (req, resp) => {
       message: "Logged in",
     });
   } catch (error) {
-    console.log(error);
     return resp.status(400).json({
       success: false,
       message: "Something went wrong",
@@ -335,7 +343,7 @@ const loginController = async (req, resp) => {
 const getProfile = async (req, resp) => {
   try {
     const user = await User.findOne({
-      _id: req.user.user._id,
+      _id: req.user._id,
     });
 
     return resp.status(201).json({
@@ -357,7 +365,7 @@ const updateProfileController = async (req, resp) => {
       });
     }
     const { name, mobileNo } = req.body;
-    const userId = req.user.user._id;
+    const userId = req.user._id;
     const data = {
       name,
       mobileNo,
@@ -365,7 +373,7 @@ const updateProfileController = async (req, resp) => {
 
     if (req.file !== undefined) {
       data.pic = req.file.filename;
-      deleteFileIfExists(req.file.path)
+      deleteFileIfExists(req.file.path);
     }
 
     const updateUser = await User.findByIdAndUpdate(
@@ -393,24 +401,21 @@ const updateProfileController = async (req, resp) => {
   }
 };
 
-const refreshTokenController = async(req,resp) =>{
+const refreshTokenController = async (req, resp) => {
   try {
-    const userId = req.user.user._id;
+    const userId = req.user._id;
 
-   const userData = await User.findOne({_id : userId});
-   const newAccessToken = await generateAccessToken({userData})
-   const newRefeshToken = await generateRefreshToken({userData})
-   return resp.status(201).json({
-    success: true,
-    message: "Token Refreshed",
-    newAccessToken : newAccessToken ,
-    newRefeshToken : newRefeshToken
-  });
-
-  } catch (error) {
-    
-  }
-}
+    const user = await User.findOne({ _id: userId });
+    const newAccessToken = await generateAccessToken(user);
+    const newRefeshToken = await generateRefreshToken(user);
+    return resp.status(201).json({
+      success: true,
+      message: "Token Refreshed Successfully",
+      newAccessToken: newAccessToken,
+      newRefeshToken: newRefeshToken,
+    });
+  } catch (error) {}
+};
 
 export {
   userResgisterController,
@@ -423,5 +428,5 @@ export {
   loginController,
   getProfile,
   updateProfileController,
-  refreshTokenController
+  refreshTokenController,
 };

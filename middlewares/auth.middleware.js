@@ -1,18 +1,21 @@
 import jwt from "jsonwebtoken";
 
+
 const authenticationMiddleware = async (req, resp, next) => {
   try {
     const bearerHeader =
       req.body.token || req.query.token || req.headers["authorization"];
     const accessToken = bearerHeader.split(" ")[1];
-    console.log(accessToken)
     if (!accessToken) {
       return resp.status(401).json({
         message: "Token required for authentication",
       });
     }
+    console.log('acess',accessToken)
+    console.log('pauload',process.env.JWT_TOKEN_SECRET)
     const payload = jwt.verify(accessToken, process.env.JWT_TOKEN_SECRET);
     req.user = payload;
+    console.log('er',req.user); // Should show the decoded payload
     next();
 
 
