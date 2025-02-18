@@ -23,6 +23,12 @@ const generateAccessToken = async (user) => {
   });
 };
 
+const generateRefreshToken = async (user) => {
+  return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, {
+    expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+  });
+};
+
 const userResgisterController = async (req, resp, next) => {
   try {
     const errors = validationResult(req);
@@ -308,11 +314,13 @@ const loginController = async (req, resp) => {
     }
 
     const accessToken = await generateAccessToken({ user });
+    const refreshToken = await generateRefreshToken({ user });
 
     return resp.status(201).json({
       success: true,
       data: user,
-      token: accessToken,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
       tokenType: "Bearer",
       message: "Logged in",
     });
@@ -371,7 +379,7 @@ const updateProfileController = async (req, resp) => {
         new: true,
       }
     );
-    return resp.status(302).json({
+    return resp.status(200).json({
       success: true,
       user: updateUser,
       message: "Profile Updated",
@@ -385,6 +393,25 @@ const updateProfileController = async (req, resp) => {
   }
 };
 
+const refreshTokenController = async(req,resp) =>{
+  try {
+    const userId = req.user.user._id;
+
+   const userData = await User.findOne({_id : userId});
+   const newAccessToken = await generateAccessToken({userData})
+   const newRefeshToken = await generateRefreshToken({userData})
+   return resp.status(201).json({
+    success: true,
+    message: "Token Refreshed",
+    newAccessToken : newAccessToken ,
+    newRefeshToken : newRefeshToken
+  });
+
+  } catch (error) {
+    
+  }
+}
+
 export {
   userResgisterController,
   mailVerificationController,
@@ -396,4 +423,5 @@ export {
   loginController,
   getProfile,
   updateProfileController,
+  refreshTokenController
 };
