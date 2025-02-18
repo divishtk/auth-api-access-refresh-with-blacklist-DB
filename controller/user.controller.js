@@ -212,7 +212,6 @@ const forgetPasswordController = async (req, resp) => {
 
 const resetPasswordAuth = async (req, resp) => {
   try {
-
     if (req.query.token === undefined) {
       return resp.render("404.view.ejs");
     }
@@ -308,13 +307,13 @@ const loginController = async (req, resp) => {
       });
     }
 
-   const accessToken =  await generateAccessToken({user})
+    const accessToken = await generateAccessToken({ user });
 
     return resp.status(201).json({
       success: true,
       data: user,
-      token : accessToken,
-      tokenType : 'Bearer',
+      token: accessToken,
+      tokenType: "Bearer",
       message: "Logged in",
     });
   } catch (error) {
@@ -327,21 +326,64 @@ const loginController = async (req, resp) => {
 };
 const getProfile = async (req, resp) => {
   try {
-
-  const user =   await User.findOne({
-      _id: req.user.user._id
-    })
+    const user = await User.findOne({
+      _id: req.user.user._id,
+    });
 
     return resp.status(201).json({
       success: true,
       data: user,
-      message:"User Profile"
+      message: "User Profile",
     });
-  } catch (error) {
-    
-  }
+  } catch (error) {}
 };
 
+const updateProfileController = async (req, resp) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return resp.status(400).json({
+        success: false,
+        message: "Error occured",
+        errors: errors.array(),
+      });
+    }
+    const { name, mobileNo } = req.body;
+    const userId = req.user.user._id;
+    const data = {
+      name,
+      mobileNo,
+    };
+
+    if (req.file !== undefined) {
+      data.pic = req.file.filename;
+      deleteFileIfExists(req.file.path)
+    }
+
+    const updateUser = await User.findByIdAndUpdate(
+      {
+        _id: userId,
+      },
+      {
+        $set: data,
+      },
+      {
+        new: true,
+      }
+    );
+    return resp.status(302).json({
+      success: true,
+      user: updateUser,
+      message: "Profile Updated",
+    });
+  } catch (error) {
+    console.log(error);
+    return resp.status(401).json({
+      success: false,
+      error: "Error occured while updating",
+    });
+  }
+};
 
 export {
   userResgisterController,
@@ -352,5 +394,6 @@ export {
   updatePasswordAuth,
   resetSuccessController,
   loginController,
-  getProfile
+  getProfile,
+  updateProfileController,
 };

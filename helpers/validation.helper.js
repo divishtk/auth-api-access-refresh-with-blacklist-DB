@@ -46,4 +46,12 @@ const loginValidatior = [
 ]
 
 
-export  {registerValidator,sendEmailApiVerifier,emailCheckValidatorForPasswordReset,loginValidatior}
+const updateProfileValidator = [
+    check('name','Name is required').not().isEmpty(),
+    check('mobileNo',"It should be of 10 digits").isLength({
+        min :10,
+        max:10
+    })
+]
+
+export  {registerValidator,sendEmailApiVerifier,emailCheckValidatorForPasswordReset,loginValidatior,updateProfileValidator}

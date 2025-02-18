@@ -5,7 +5,6 @@ const authenticationMiddleware = async (req, resp, next) => {
     const bearerHeader =
       req.body.token || req.query.token || req.headers["authorization"];
     const accessToken = bearerHeader.split(" ")[1];
-    console.log(accessToken)
     if (!accessToken) {
       return resp.status(401).json({
         message: "Token required for authentication",
