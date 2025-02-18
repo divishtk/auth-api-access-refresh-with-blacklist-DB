@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { Blacklist } from "../models/blacklist-token.model.js";
 
 
 const authenticationMiddleware = async (req, resp, next) => {
@@ -11,8 +12,20 @@ const authenticationMiddleware = async (req, resp, next) => {
         message: "Token required for authentication",
       });
     }
-    console.log('acess',accessToken)
-    console.log('pauload',process.env.JWT_TOKEN_SECRET)
+
+    const blacklistedToken = await Blacklist.findOne(
+      {
+        token : accessToken
+      }
+    );
+
+    if(blacklistedToken){
+      return resp.status(400).json({
+        success: false,
+        message: "Session is expired, please login again!!",
+      });
+    }
+
     const payload = jwt.verify(accessToken, process.env.JWT_TOKEN_SECRET);
     req.user = payload;
     console.log('er',req.user); // Should show the decoded payload

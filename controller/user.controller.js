@@ -1,4 +1,5 @@
 import { User } from "../models/user.models.js";
+import { Blacklist } from "../models/blacklist-token.model.js";
 import fs from "fs";
 import { validationResult } from "express-validator";
 import { sendEmails } from "../helpers/sendMails.helper.js";
@@ -417,6 +418,23 @@ const refreshTokenController = async (req, resp) => {
   } catch (error) {}
 };
 
+const logoutController = async (req, resp) => {
+  const bearerHeader =
+    req.body.token || req.query.token || req.headers["authorization"];
+  const bearerToken = bearerHeader.split(" ")[1];
+
+  const blacklistToken = new Blacklist({
+    token: bearerToken,
+  });
+
+  await blacklistToken.save();
+  resp.setHeader("Clear-Site-Data", '"cookies","storage');
+  return resp.status(201).json({
+    success: true,
+    message: "You are logged out",
+  });
+};
+
 export {
   userResgisterController,
   mailVerificationController,
@@ -429,4 +447,5 @@ export {
   getProfile,
   updateProfileController,
   refreshTokenController,
+  logoutController,
 };
