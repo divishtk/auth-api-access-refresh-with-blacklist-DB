@@ -212,7 +212,6 @@ const forgetPasswordController = async (req, resp) => {
 
 const resetPasswordAuth = async (req, resp) => {
   try {
-    console.log("called 1");
 
     if (req.query.token === undefined) {
       return resp.render("404.view.ejs");
@@ -309,7 +308,7 @@ const loginController = async (req, resp) => {
       });
     }
 
-   const accessToken =  await generateAccessToken({_id : user._id})
+   const accessToken =  await generateAccessToken({user})
 
     return resp.status(201).json({
       success: true,
@@ -326,6 +325,23 @@ const loginController = async (req, resp) => {
     });
   }
 };
+const getProfile = async (req, resp) => {
+  try {
+
+  const user =   await User.findOne({
+      _id: req.user.user._id
+    })
+
+    return resp.status(201).json({
+      success: true,
+      data: user,
+      message:"User Profile"
+    });
+  } catch (error) {
+    
+  }
+};
+
 
 export {
   userResgisterController,
@@ -336,4 +352,5 @@ export {
   updatePasswordAuth,
   resetSuccessController,
   loginController,
+  getProfile
 };
